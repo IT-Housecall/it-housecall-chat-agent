@@ -1,0 +1,21 @@
+services:
+  housecall:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - path: ../.env
+        required: false
+    ports:
+      - "3978:3978"
+    volumes:
+      - ../config:/app/config:ro
+      - ../docs:/app/docs:ro
+      - data:/app/data
+      # Google Chat and Drive: put the service account key in ../secrets and set
+      # GOOGLE_SERVICE_ACCOUNT_FILE=secrets/<file>.json in .env.
+      # - ../secrets:/app/secrets:ro
+
+volumes:
+  data:

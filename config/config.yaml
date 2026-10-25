@@ -1,0 +1,59 @@
+# @housecall configuration. Secrets go in .env; anything here can reference them as ${NAME}.
+# Relative paths are relative to the project folder (the working directory).
+
+model:
+  provider: openai # uses OPENAI_API_KEY; pi's model catalog supplies the context window, limits and image input
+  id: gpt-6.1-sol
+  # provider: anthropic              # uses ANTHROPIC_API_KEY; id e.g. claude-sonnet-5-5
+  # Any other /v1/chat/completions endpoint (OpenRouter, vLLM, Ollama...) isn't in the catalog, so describe it:
+  # provider: openai_compatible
+  # base_url: https://openrouter.ai/api/v1
+  # id: <model id>
+  # context_window: 200000
+  # max_tokens: 16384
+  # api_key_env: LLM_API_KEY         # the .env variable holding the key
+  # images: false                 # on by default; turn off for a model that only reads text
+
+chat:
+  slack: { enabled: true } # SLACK_BOT_TOKEN, SLACK_APP_TOKEN
+  teams: { enabled: false } # TEAMS_CLIENT_ID, TEAMS_CLIENT_SECRET, TEAMS_TENANT_ID
+  googlechat: # GOOGLE_SERVICE_ACCOUNT_FILE
+    enabled: false
+    endpoint_url: https://housecall.example.com/googlechat
+    project_number: "123456789012" # Chat API authentication audience: Project Number
+
+http:
+  port: 3978 # Teams and Google Chat deliver messages to this port; Slack doesn't use it
+
+docs:
+  sync_interval_minutes: 30
+  sources:
+    - type: local # Markdown and text files; docs/ ships empty
+      name: runbooks
+      path: ./docs
+      # url_base: https://github.com/acme/it-docs/blob/main/docs   # links cite this instead of file://
+    # - type: google_drive           # GOOGLE_SERVICE_ACCOUNT_FILE; share the folder with the service account
+    #   name: it-drive
+    #   folder_id: 1AbCdEfGhIjKlMnOpQrStUvWxYz   # this folder and everything below it
+    # - type: confluence             # CONFLUENCE_EMAIL, CONFLUENCE_API_TOKEN
+    #   name: wiki
+    #   site: https://acme.atlassian.net
+    #   space_key: IT                # the whole space...
+    #   parent_page_id: "123456"     # ...or only this page and its descendants
+
+mcp: []
+# mcp:
+#   - name: tickets
+#     command: npx
+#     args: ["-y", "@acme/tickets-mcp"]
+#     env: { TICKETS_TOKEN: "${TICKETS_TOKEN}" }
+#     read_only: [search_tickets, get_ticket]   # every other tool asks for approval
+#   - name: remote
+#     url: https://mcp.example.com/mcp
+#     headers: { Authorization: "Bearer ${REMOTE_MCP_TOKEN}" }
+
+approvals:
+  timeout_minutes: 60
+
+# system_prompt: |
+#   Our office is in Berlin. Hardware requests go through the #it-hardware channel.
