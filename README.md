@@ -1,12 +1,11 @@
 # @housecall
 
-TODO: Image 
+<img src=".github/readme/answer.png" alt="@housecall answering an Outlook password question in Slack and linking the doc it used" width="720">
 
 `@housecall` is a self-hosted IT helpdesk agent for Slack, Microsoft Teams and Google Chat. People ask it how to fix
 something, and it searches your IT docs (a local folder, Google Drive, Confluence) and answers with links to the
-pages it used. It can also act through tools you add (MCP servers or small TypeScript files). Any tool that changes
-something waits until the person who asked confirms it in the chat (see [Approvals](#approvals): this is not an IT
-sign-off).
+pages it used. It can also use tools you add (MCP servers or small TypeScript files). Tools that change things ask the
+person who asked for help before they run (see [Approvals](#approvals)).
 
 This repository is a starter: it holds your settings, runbooks and extensions, and everything else comes from the
 [`@ithousecall/chat`](https://www.npmjs.com/package/@ithousecall/chat) npm package. 
@@ -17,7 +16,7 @@ config/config.yaml        settings
 docs/                     your Markdown runbooks
 src/main.ts               starts `@housecall` with your extensions
 src/extensions/jira.ts    an example extension
-deploy/                   Dockerfile, docker-compose.yml, Slack manifest, Teams app
+deploy/                   Dockerfile, docker-compose.yml, Slack manifest, Teams app, app icon
 data/                     state (gitignored)
 ```
 
@@ -27,7 +26,8 @@ You need Node 24, Docker, an OpenAI/Anthropic/or other AI model API key, and one
 below). 
 
 ```sh
-git clone TODO URL
+git clone https://github.com/IT-Housecall/it-housecall-chat-agent.git my-it-agent
+cd my-it-agent
 npm install
 cp .env.example .env                  # secrets: set OPENAI_API_KEY and the platform's tokens
 # edit config/config.yaml: the model, and enable the platform under chat:
@@ -62,7 +62,8 @@ To set up Slack:
 2. Under Basic Information, create an app-level token with the `connections:write` scope. That is `SLACK_APP_TOKEN`
    (`xapp-...`).
 3. Install the app to your workspace and copy the Bot User OAuth Token into `SLACK_BOT_TOKEN` (`xoxb-...`).
-4. Set `chat.slack.enabled: true`.
+4. Under Basic Information → Display Information, upload [`deploy/icon.png`](deploy/icon.png) as the app icon.
+5. Set `chat.slack.enabled: true`.
 
 Note: Slack does not need a public URL, unlike Teams, so you don't need to set up a Cloudflare tunnel.
 
@@ -95,8 +96,8 @@ cloudflared tunnel --url http://localhost:3978
    into the container (put it in `secrets/` and uncomment `../secrets:/app/secrets:ro` in
    `deploy/docker-compose.yml`) and set `GOOGLE_SERVICE_ACCOUNT_FILE=secrets/<file>.json`.
 2. In the Chat API's Configuration page, set the connection to HTTP endpoint URL, for example
-   `https://<public host>/googlechat`, and set the authentication audience to **Project Number**. Choose who can use
-   the app.
+   `https://<public host>/googlechat`, and set the authentication audience to **Project Number**. Use
+   `https://chat.ithousecall.app/icon.png` as the avatar URL. Choose who can use the app.
 3. Set the same URL and the project's number (on the Cloud console dashboard) in config:
 
    ```yaml
@@ -117,9 +118,10 @@ accepted for Chat API apps, because any Chat app could be pointed at your URL wi
 
 ## Adding your runbooks/docs 
 
-TODO: Image of an agent referencing docs
+<img src=".github/readme/image.png" alt="@housecall reading a certificate error screenshot and answering from an IT doc" width="720">
 
-TODO: what is this
+`@housecall` answers from your IT docs: a folder of Markdown files, a Google Drive folder or a Confluence space.
+Each answer links the pages it used. If no doc covers the question, it says so instead of guessing.
 
 Sources are indexed at startup and every `sync_interval_minutes`.
 Only changed documents are fetched again, documents that are deleted from the source (e.g., Google Drive) are removed, and the documents of a source you remove from the config are dropped at the next sync. Each source needs a unique `name`.
@@ -159,28 +161,35 @@ docs:
 
 ## Extensions
 
-TODO: Image of an example extension
+<img src=".github/readme/extension.png" alt="@housecall checking a slow laptop with a device management tool" width="720">
 
 You can extend the functionality of `@housecall` by writing extensions. 
 
 Some things you can do with extensions:
-- TODO ADD THESE
+- Check a laptop in your device management, like Kandji or Jamf, when someone says it's slow.
+- Search Jira, or open a ticket for the person asking. The included [`jira.ts`](src/extensions/jira.ts) does this.
+- Lock a lost laptop or sign someone out of Okta, once they approve it.
+- Request a loaner laptop, as in the [example below](#code-extensions).
 
 ### Approvals
 
-A tool marked as a write tool does not run until the requester confirms it: the person whose message led the model
-to call it. @housecall posts an approval message with the tool, its arguments and Approve/Deny buttons (`approve <id>` /
-`deny <id>` in the console). Only the requester's click counts; anyone else who clicks is told so. An undecided
-approval expires after `approvals.timeout_minutes` (default 60) and the model is told the action did not happen. A
-pending approval survives a restart; a crash in the moment between posting it and recording that it was posted can
-post it a second time. While it is pending, new messages in that thread are added to the same turn, and a tool the
-model calls after reading someone else's message asks that person.
+<img src=".github/readme/approval.png" alt="@housecall asking Sam to approve an Okta sign-out, after Sam approved locking the laptop" width="720">
 
-Approval is the requester confirming the action, not an IT sign-off: anyone can confirm what they asked for. So a
-write tool must act only on the requester's own account, or check for itself that the requester may do what it does.
-Code extensions get the requester with `requester(api, context)` from `@ithousecall/chat` (a chat user ID and
-display name). Do not give everyone admin tools such as resetting someone else's MFA; for MCP servers, list the
-tools that are safe for everyone in `read_only` and leave admin servers out.
+Some tools change things, like locking a laptop. Before one of these runs, `@housecall` asks the person who
+asked for help. It posts a message that says what it will do, with an Approve button and a Deny button. Only that
+person's click counts. If they don't click within 60 minutes, the tool does not run. You can change the 60 minutes
+with `approvals.timeout_minutes`. In the console, type `approve <id>` or `deny <id>`.
+
+Anyone can approve their own request. That does not mean IT said yes. So:
+
+- Each tool should only change the account of the person who asked, or check first that they're allowed. In a code
+  extension, `requester(api, context)` from `@ithousecall/chat` tells you who asked.
+- Don't give everyone tools that only admins should use, like resetting someone else's MFA.
+- For MCP servers, tools listed in `read_only` run without asking. Only list tools that are safe for anyone to use.
+  Don't add MCP servers that have admin tools.
+
+The [Approvals docs](https://chat.ithousecall.app/docs/approvals) explain what happens after a restart and while a
+request is waiting.
 
 ### MCP servers
 
