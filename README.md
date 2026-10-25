@@ -17,7 +17,7 @@ docs/                     your Markdown runbooks
 how-to/SETUP.md           setup steps for a coding agent
 src/main.ts               starts `@housecall` with your extensions
 src/extensions/jira.ts    an example extension
-deploy/                   Dockerfile, docker-compose.yml, Slack manifest, Teams app, app icon
+deploy/                   Dockerfile, docker-compose.yml, Slack manifest and app script, Teams app, app icon
 data/                     state (gitignored)
 ```
 
