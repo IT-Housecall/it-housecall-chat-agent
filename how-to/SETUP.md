@@ -5,16 +5,21 @@ Instructions for you, the coding agent. Walk the user through setup and do the w
 need their browser. Ask one step at a time, and confirm each part works before moving on. Never print, log or commit
 secrets.
 
+When the user has a browser step, write out the numbered steps from this guide in your message, each with its link,
+then wait for them to finish. Never refer to steps you haven't shown them.
+
 ## 1. Organization and model
 
-Ask both at once: what the organization is called, and which model provider they use (OpenAI, Anthropic, or another
-OpenAI-compatible endpoint such as OpenRouter, vLLM or Ollama).
+Ask both at once: what the organization is called (an open question; don't offer the placeholder in the config as
+an answer), and which model provider they use (OpenAI, Anthropic, or another OpenAI-compatible endpoint such as
+OpenRouter, vLLM or Ollama).
 
-- Set the top-level `org:` in `config/config.yaml` (for example `org: Acme`); add the line at the top if it is
-  missing.
+- Set the top-level `org:` in `config/config.yaml`; add the line at the top if it is missing.
 - Set the `model:` block (examples are in the file's comments and `README.md`). Run `cp .env.example .env` if
-  `.env` doesn't exist, then ask them to paste the key into `.env` themselves (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`,
-  or the variable named by `api_key_env`), or offer to write it if they give it to you.
+  `.env` doesn't exist, then ask them to create a key and paste it into `.env` themselves (`OPENAI_API_KEY`,
+  `ANTHROPIC_API_KEY`, or the variable named by `api_key_env`), or offer to write it if they give it to you. Link
+  where to create it: https://platform.openai.com/api-keys (OpenAI), https://console.anthropic.com/settings/keys
+  (Anthropic), https://openrouter.ai/settings/keys (OpenRouter).
 
 ## 2. Chat platform
 
@@ -37,7 +42,8 @@ host with its own URL.
 
 **Microsoft Teams**. The user, in the Azure portal:
 
-1. Create an Azure Bot: Single Tenant, Create new Microsoft App ID.
+1. At https://portal.azure.com/#create/Microsoft.AzureBot: create an Azure Bot, Single Tenant, Create new Microsoft
+   App ID.
 2. Configuration: set the messaging endpoint to `<public URL>/api/messages`. Manage Password: create a client secret.
 3. Channels: add Microsoft Teams.
 4. Give you the app ID, the secret and the tenant ID (or paste them into `.env`).
@@ -50,8 +56,9 @@ the files at the zip root (`deploy/*.zip` is gitignored):
 
 **Google Chat**. The user, in Google Cloud:
 
-1. Enable the Google Chat API, create a service account and download a JSON key.
-2. In the Chat API's Configuration page: set the name, avatar and description; turn on interactive features and Join
+1. Enable the Google Chat API at https://console.cloud.google.com/apis/library/chat.googleapis.com. At
+   https://console.cloud.google.com/iam-admin/serviceaccounts create a service account, then Keys, Add key, JSON.
+2. At https://console.cloud.google.com/apis/api/chat.googleapis.com/hangouts-chat (the Chat API's Configuration): set the name, avatar and description; turn on interactive features and Join
    spaces and group conversations; under Connection settings choose HTTP endpoint URL `<public URL>/googlechat` and
    Authentication audience **Project Number**; under Visibility choose who can use it.
 3. Give you the project number (on the project's dashboard).
@@ -70,8 +77,10 @@ Ask where their IT docs live and configure `docs.sources` in `config/config.yaml
 
 - **Local folder** of Markdown or text files: copy them into `docs/`. If they are in a git repo, ask for its web URL
   and set `url_base` so answers link to it.
-- **Google Drive**. The user, in a browser: in a Google Cloud project, enable the Google Drive API, create a service
-  account and download a JSON key (or reuse the Google Chat one); share the Drive folder with the service account's
+- **Google Drive**. The user, in a browser: enable the Google Drive API at
+  https://console.cloud.google.com/apis/library/drive.googleapis.com; at
+  https://console.cloud.google.com/iam-admin/serviceaccounts create a service account and download a JSON key (or
+  reuse the Google Chat one); share the Drive folder with the service account's
   email as Viewer; give you the folder URL. You: put the key in `secrets/`, set
   `GOOGLE_SERVICE_ACCOUNT_FILE=secrets/<file>.json`, uncomment the `../secrets:/app/secrets:ro` volume in
   `deploy/docker-compose.yml`, and add a `google_drive` source with the folder ID (the last part of the URL).
