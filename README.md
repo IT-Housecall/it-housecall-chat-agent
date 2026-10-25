@@ -14,6 +14,7 @@ This repository is a starter: it holds your settings, runbooks and extensions, a
 config/config.yaml        settings 
 .env                      secrets (gitignored)
 docs/                     your Markdown runbooks
+how-to/SETUP.md           setup steps for a coding agent
 src/main.ts               starts `@housecall` with your extensions
 src/extensions/jira.ts    an example extension
 deploy/                   Dockerfile, docker-compose.yml, Slack manifest, Teams app, app icon
@@ -25,12 +26,14 @@ data/                     state (gitignored)
 You need Node 24, Docker, an OpenAI/Anthropic/or other AI model API key, and one chat platform set up (see
 below). 
 
+Using a coding agent? Open the repo in it and ask it to set things up; it follows `how-to/SETUP.md`.
+
 ```sh
 git clone https://github.com/IT-Housecall/it-housecall-chat-agent.git my-it-agent
 cd my-it-agent
 npm install
 cp .env.example .env                  # secrets: set OPENAI_API_KEY and the platform's tokens
-# edit config/config.yaml: the model, and enable the platform under chat:
+# edit config/config.yaml: your org's name, the model, and enable the platform under chat:
 cp -r /path/to/your/runbooks/. docs/  # or configure Google Drive or Confluence below
 docker compose -f deploy/docker-compose.yml up -d --build
 docker compose -f deploy/docker-compose.yml logs -f

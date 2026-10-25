@@ -1,6 +1,8 @@
 # @housecall configuration. Secrets go in .env; anything here can reference them as ${NAME}.
 # Relative paths are relative to the project folder (the working directory).
 
+org: Acme # your organization's name
+
 model:
   provider: openai # uses OPENAI_API_KEY; pi's model catalog supplies the context window, limits and image input
   id: gpt-6.1-sol

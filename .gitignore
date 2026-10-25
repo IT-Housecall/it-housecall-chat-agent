@@ -3,3 +3,4 @@ node_modules/
 secrets/
 data/*
 !data/.gitkeep
+deploy/*.zip
